@@ -36,9 +36,9 @@ contract SimpleLending {
         address lender;
         address borrower;
         ERC20Interface asset;
-        ERC20Interface backedAsset;
+        ERC20Interface assetBacked;
         uint256 assetAmount;
-        uint256 backedAssetAmount;
+        uint256 assetBackedAmount;
         uint256 payOffAmount;
         uint256 startBorrowingDate;
         uint256 pastDays;
@@ -144,25 +144,25 @@ contract SimpleLending {
     function borrow(
         address lender,
         ERC20Interface asset,
-        ERC20Interface backedAsset,
-        uint256 backedAssetAmount
+        ERC20Interface assetBacked,
+        uint256 assetBackedAmount
     ) public {
         require(isSupported(asset));
-        require(isSupported(backedAsset));
+        require(isSupported(assetBacked));
 
         LendingNote storage ln = Lending[lender][address(asset)];
         require(ln.lender == lender);
         require(ln.borrower == address(0));
 
-        uint256 exchangeRate = getRate(asset,backedAsset);
-        uint256 backedAssetAtRateAmount = ln.assetAmount * exchangeRate / denominator;
+        uint256 exchangeRate = getRate(asset,assetBacked);
+        uint256 assetBackedAtRateAmount = ln.assetAmount * exchangeRate / denominator;
 
-        require(backedAssetAmount >= backedAssetAtRateAmount * collateralRatio);
-        require(backedAsset.transferFrom(msg.sender,address(this),backedAssetAmount));
+        require(assetBackedAmount >= assetBackedAtRateAmount * collateralRatio);
+        require(assetBacked.transferFrom(msg.sender,address(this),assetBackedAmount));
 
         ln.borrower = msg.sender;
-        ln.backedAsset = backedAsset;
-        ln.backedAssetAmount = backedAssetAmount;
+        ln.assetBacked = assetBacked;
+        ln.assetBackedAmount = assetBackedAmount;
         ln.startBorrowingDate = now;
         ln.payOffAmount = ln.assetAmount * interestRate / denominator;
         ln.pastDays = 0;
@@ -178,12 +178,12 @@ contract SimpleLending {
         updatePayOff(lender,asset);
 
         require(asset.transferFrom(msg.sender,address(this),ln.payOffAmount));
-        require(ln.backedAsset.transfer(msg.sender,ln.backedAssetAmount));
+        require(ln.assetBacked.transfer(msg.sender,ln.assetBackedAmount));
 
         ln.assetAmount = ln.payOffAmount;
         ln.borrower = address(0);
-        ln.backedAsset = ERC20Interface(address(0));
-        ln.backedAssetAmount = 0;
+        ln.assetBacked = ERC20Interface(address(0));
+        ln.assetBackedAmount = 0;
         ln.startBorrowingDate = 0;
         ln.payOffAmount = 0;
         ln.pastDays = 0;
@@ -196,12 +196,12 @@ contract SimpleLending {
 
         updatePayOff(msg.sender,asset);
 
-        uint256 exchangeRate = getRate(asset,ln.backedAsset);
-        uint256 payOffBackedAssetAmount = ln.payOffAmount * exchangeRate / denominator;
+        uint256 exchangeRate = getRate(asset,ln.assetBacked);
+        uint256 payOffassetBackedAmount = ln.payOffAmount * exchangeRate / denominator;
 
-        require(ln.backedAssetAmount < payOffBackedAssetAmount * liquidationRatio / denominator);
+        require(ln.assetBackedAmount < payOffassetBackedAmount * liquidationRatio / denominator);
 
-        require(ln.backedAsset.transfer(msg.sender,ln.backedAssetAmount));
+        require(ln.assetBacked.transfer(msg.sender,ln.assetBackedAmount));
 
         delete Lending[msg.sender][address(asset)];
     }
