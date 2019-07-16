@@ -1,4 +1,10 @@
 # SimpleLendingWithBandOracle
 
+=====================
+
 Caution
-There is some untested contract
+
+<dl>
+  <dt>Caution</dt>
+  <dd>There is an untested contract.</dd>
+</dl>
