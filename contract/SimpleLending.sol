@@ -26,7 +26,7 @@ contract SimpleLending {
 
     uint256 public denominator = 1e18; // 1 scaled by 1e18
     uint256 public interestRate = 1e18 + 1e16; // 1.01 scaled by 1e18
-    uint256 public liquidationRatio = 1e18 + 5e17;  // 1.5 scaled by 1e18
+    uint256 public liquidationRatio = 1e18 + 1e17;  // 1.5 scaled by 1e18
     uint256 public collateralRatio = 2;
 
     address public admin;
