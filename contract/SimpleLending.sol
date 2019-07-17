@@ -14,8 +14,8 @@ interface QueryInterface {
 
   function query(bytes calldata input)
     external payable returns (bytes32 output, uint256 updatedAt, QueryStatus status);
-  function queryPrice(bytes calldata input)
-    external view returns (uint256);
+
+  function queryPrice() external view returns (uint256);
 }
 
 contract SimpleLending {
@@ -26,7 +26,7 @@ contract SimpleLending {
     uint256 public collateralRatio = 2;
 
     address public admin;
-    address public oracle;
+    QueryInterface public oracle;
 
     struct LendingNote {
         address lender;
@@ -44,7 +44,7 @@ contract SimpleLending {
 
     mapping(address => mapping(address => LendingNote) ) public Lending; // lender => asset => LendingNote
 
-    constructor(address _oracle) public {
+    constructor(QueryInterface _oracle) public {
         admin = msg.sender;
         oracle = _oracle;
     }
@@ -70,8 +70,7 @@ contract SimpleLending {
         require(isSupported(asset2));
         bytes memory key = createKey(supportedAssets[address(asset1)], supportedAssets[address(asset2)]);
 
-        QueryInterface q = QueryInterface(oracle);
-        (bytes32 rawRate,, QueryInterface.QueryStatus status) = q.query.value(q.queryPrice(key))(key);
+        (bytes32 rawRate,, QueryInterface.QueryStatus status) = oracle.query.value(oracle.queryPrice())(key);
         require(status == QueryInterface.QueryStatus.OK);
         return uint256(rawRate);
     }
