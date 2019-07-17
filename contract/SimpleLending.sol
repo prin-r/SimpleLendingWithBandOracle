@@ -73,7 +73,7 @@ contract SimpleLending {
     }
 
     function isSupported(ERC20Interface asset) public view returns(bool) {
-        return bytes(supportedAssets[address(asset)]).length > 0;
+        return supportedAssets[address(asset)].length > 0;
     }
 
     function addSupportedAssets(ERC20Interface asset, bytes memory symbol) public {
