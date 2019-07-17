@@ -1,4 +1,3 @@
-
 pragma solidity 0.5.10;
 
 interface ERC20Interface {
@@ -8,9 +7,6 @@ interface ERC20Interface {
     function transfer(address to, uint tokens) external returns (bool success);
     function approve(address spender, uint tokens) external returns (bool success);
     function transferFrom(address from, address to, uint tokens) external returns (bool success);
-
-    event Transfer(address indexed from, address indexed to, uint tokens);
-    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
 }
 
 interface QueryInterface {
@@ -53,23 +49,8 @@ contract SimpleLending {
         oracle = _oracle;
     }
 
-    function concatBytes(bytes memory a, bytes memory b) internal pure returns(bytes memory c) {
-        uint256 alen = a.length;
-        uint256 totallen = alen + b.length;
-        uint256 la = (a.length + 31) / 32;
-        uint256 lb = (b.length + 31) / 32;
-        assembly {
-            let m := mload(0x40)
-            mstore(m, totallen)
-            for {  let i := 0 } lt(i, la) { i := add(1, i) } {
-                mstore(add(m, mul(32, add(1, i))), mload(add(a, mul(32, add(1, i)))))
-            }
-            for {  let i := 0 } lt(i, lb) { i := add(1, i) } {
-                mstore(add(m, add(mul(32, add(1, i)), alen)), mload(add(b, mul(32, add(1, i)))))
-            }
-            mstore(0x40, add(m, add(32, totallen)))
-            c := m
-        }
+    function createKey(bytes memory a, bytes memory b) public pure returns(bytes memory c) {
+        return abi.encodePacked(a,'/',b);
     }
 
     function isSupported(ERC20Interface asset) public view returns(bool) {
@@ -87,14 +68,7 @@ contract SimpleLending {
     function getRate(ERC20Interface asset1, ERC20Interface asset2) internal returns (uint256) {
         require(isSupported(asset1));
         require(isSupported(asset2));
-        bytes memory key =
-        concatBytes(
-            concatBytes(
-                supportedAssets[address(asset1)],
-                "/"
-            ),
-            supportedAssets[address(asset2)]
-        );
+        bytes memory key = createKey(supportedAssets[address(asset1)], supportedAssets[address(asset2)]);
 
         QueryInterface q = QueryInterface(oracle);
         (bytes32 rawRate,, QueryInterface.QueryStatus status) = q.query.value(q.queryPrice(key))(key);
